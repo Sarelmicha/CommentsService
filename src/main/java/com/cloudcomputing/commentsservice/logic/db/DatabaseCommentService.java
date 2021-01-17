@@ -9,10 +9,10 @@ import com.cloudcomputing.commentsservice.exceptions.ConflictException;
 import com.cloudcomputing.commentsservice.exceptions.NotFoundException;
 import com.cloudcomputing.commentsservice.exceptions.UnauthorizedException;
 import com.cloudcomputing.commentsservice.logic.EnhancedCommentService;
-import com.cloudcomputing.commentsservice.logic.consumers.UserConsumer;
 import com.cloudcomputing.commentsservice.logic.utils.CRITERIA_TYPE;
 import com.cloudcomputing.commentsservice.logic.utils.CommentConverter;
 import com.cloudcomputing.commentsservice.logic.utils.COMMENT_TYPE;
+import com.cloudcomputing.commentsservice.producers.UserManagementRestService;
 import com.cloudcomputing.commentsservice.utils.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -29,13 +29,13 @@ public class DatabaseCommentService implements EnhancedCommentService {
 
     private CommentDao commentDao;
     private CommentConverter converter;
-    private UserConsumer userConsumer;
+    private UserManagementRestService userManagementRestService;
 
     @Autowired
-    public DatabaseCommentService(CommentDao commentDao ,CommentConverter converter, UserConsumer userConsumer) {
+    public DatabaseCommentService(CommentDao commentDao ,CommentConverter converter, UserManagementRestService userManagementRestService) {
         this.commentDao = commentDao;
         this.converter = converter;
-        this.userConsumer = userConsumer;
+        this.userManagementRestService = userManagementRestService;
     }
 
     @Override
@@ -69,7 +69,7 @@ public class DatabaseCommentService implements EnhancedCommentService {
 
         commentBoundary.validate();
 
-        UserBoundary userBoundary = userConsumer.login(commentBoundary.getUser().getEmail(), password);
+        userManagementRestService.login(commentBoundary.getUser().getEmail(), password);
 
         if(commentBoundary.getCommentType() == COMMENT_TYPE.REACTION) {
             List<CommentEntity> allUserComments = commentDao.findAllByUser_Email_AndBlogId_AndCommentType(
@@ -94,7 +94,7 @@ public class DatabaseCommentService implements EnhancedCommentService {
 
         // Check if User is exists in the User Service and login with his password
         commentBoundary.validate();
-        UserBoundary userBoundary = userConsumer.login(commentBoundary.getUser().getEmail(), password);
+        UserBoundary userBoundary = userManagementRestService.login(commentBoundary.getUser().getEmail(), password);
 
         // Check if the comment is exists in the comments database
         CommentEntity commentEntity = commentDao.findById(commentId);
@@ -120,7 +120,7 @@ public class DatabaseCommentService implements EnhancedCommentService {
     @Transactional
     public void deleteAllComments(String email, String password)
     {
-        UserBoundary userBoundary = userConsumer.login(email, password);
+        UserBoundary userBoundary = userManagementRestService.login(email, password);
         checkAdminRole(userBoundary.getRoles());
         this.commentDao.deleteAll();
     }
@@ -128,7 +128,7 @@ public class DatabaseCommentService implements EnhancedCommentService {
     @Override
     @Transactional
     public void deleteAllCommentsOfSpecificBlog(String blogId, String email, String password) {
-        UserBoundary userBoundary = userConsumer.login(email, password);
+        UserBoundary userBoundary = userManagementRestService.login(email, password);
         checkAdminRole(userBoundary.getRoles());
         this.commentDao.deleteAllByBlogId(blogId);
     }
@@ -136,7 +136,16 @@ public class DatabaseCommentService implements EnhancedCommentService {
     @Override
     @Transactional
     public void deleteComment(String email, String password, Long commentId) {
-        UserBoundary userBoundary = userConsumer.login(email, password);
+
+        userManagementRestService.login(email, password);
+        CommentEntity toBeDeleteComment  = this.commentDao.findById(commentId);
+
+        if(toBeDeleteComment == null) {
+            throw new NotFoundException("No comment found with id " + commentId);
+        }
+        if(!toBeDeleteComment.getUser().getEmail().equalsIgnoreCase(email)){
+            throw new BadRequestException("The user cannot delete comments of other user");
+        }
         this.commentDao.deleteById(commentId);
     }
 
@@ -146,5 +155,4 @@ public class DatabaseCommentService implements EnhancedCommentService {
             throw new UnauthorizedException("User does not have the permissions to make this operation.");
         }
     }
-
 }

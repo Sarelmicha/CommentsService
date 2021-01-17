@@ -20,6 +20,7 @@ public interface CommentDao  extends JpaRepository<CommentEntity, String> {
     List<CommentEntity> findAllByBlogId_AndCountry(@Param("blogId") String blogId, @Param("country") String country, Pageable pageable);
 
     CommentEntity findById(@Param("id") Long id);
+
     void deleteById(@Param("id") Long id);
     void deleteAllByBlogId(@Param("blogId") String blogId);
 

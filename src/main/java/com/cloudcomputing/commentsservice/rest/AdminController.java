@@ -16,7 +16,7 @@ public class AdminController  {
     }
 
     /*--------------------- DELETE APIS ------------------- */
-    @RequestMapping(path = "/comments/{email}",
+    @RequestMapping(path = "/comments/admin/{email}",
             method = RequestMethod.DELETE)
     public void deleteAllComments(
             @PathVariable("email") String email,
@@ -24,7 +24,7 @@ public class AdminController  {
         this.enhancedCommentService.deleteAllComments(email, password);
     }
 
-    @RequestMapping(path = "/comments/{blogid}/{email}",
+    @RequestMapping(path = "/comments/admin/{blogid}/{email}",
             method = RequestMethod.DELETE)
     public void deleteAllCommentsOfSpecificBlog(
             @PathVariable("blogid") String blogId,
