@@ -138,10 +138,7 @@ public class DatabaseCommentService implements EnhancedCommentService {
     @Transactional
     public void deleteAllCommentsOfSpecificBlog(String blogId, String email, String password) {
 
-        BlogPostBoundary blogPostBoundary =  blogManagementRestService.getBlog(blogId).block();
-        if(blogPostBoundary == null){
-            throw new NotFoundException("No blog found with the blogId " + blogId);
-        }
+        checkBlogExists(blogId);
 
         UserBoundary userBoundary = userManagementRestService.login(email, password);
         checkAdminRole(userBoundary.getRoles());
@@ -173,7 +170,7 @@ public class DatabaseCommentService implements EnhancedCommentService {
 
     private void checkBlogExists(String blogId) {
 
-        BlogPostBoundary blogPostBoundary =  blogManagementRestService.getBlog(blogId).block();
+        BlogPostBoundary blogPostBoundary =  blogManagementRestService.getBlog(blogId);
         if(blogPostBoundary == null){
             throw new NotFoundException("No blog found with the blogId " + blogId);
         }
