@@ -18,7 +18,7 @@ public class UserManagementRestService {
     private String url;
     private int port;
     private String host;
-    private String userRoute;
+    private String route;
 
 
     @Value("${userManagementService.port:8081}")
@@ -31,16 +31,16 @@ public class UserManagementRestService {
         this.host = host;
     }
 
-    @Value("${userManagementService.userRoute:users}")
-    public void setRoute(String userRoute) {
-        this.userRoute = userRoute;
+    @Value("${userManagementService.route:users}")
+    public void setRoute(String route) {
+        this.route = route;
     }
 
 
     @PostConstruct
     public void init() {
         this.restTemplate = new RestTemplate();
-        this.url = "http://" + host + ":" + port + "/" + userRoute;
+        this.url = "http://" + host + ":" + port + "/" + route;
     }
 
     public UserBoundary login(String email, String password){

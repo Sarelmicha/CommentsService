@@ -18,6 +18,7 @@ dependencies {
 	implementation 'org.postgresql:postgresql'
 	implementation group: 'org.springdoc', name: 'springdoc-openapi-ui', version: '1.4.8'
 	implementation 'org.hibernate:hibernate-core:5.4.27.Final'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	runtimeOnly 'org.postgresql:postgresql'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

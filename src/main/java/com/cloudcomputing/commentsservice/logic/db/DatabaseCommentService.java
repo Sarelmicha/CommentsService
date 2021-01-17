@@ -1,5 +1,6 @@
 package com.cloudcomputing.commentsservice.logic.db;
 
+import com.cloudcomputing.commentsservice.boundaries.BlogPostBoundary;
 import com.cloudcomputing.commentsservice.boundaries.CommentBoundary;
 import com.cloudcomputing.commentsservice.boundaries.UserBoundary;
 import com.cloudcomputing.commentsservice.consumers.BlogManagementRestService;
@@ -46,6 +47,8 @@ public class DatabaseCommentService implements EnhancedCommentService {
     @Transactional(readOnly = true)
     public List<CommentBoundary> getAllComments(String blogId, String criteriaType, String criteriaValue, int size, int page, String sortBy, String sortOrder) {
 
+        checkBlogExists(blogId);
+
         if (criteriaType != null && criteriaValue != null) {
             if (criteriaType.equals(CRITERIA_TYPE.BY_TYPE.toString())) {
                 return this.commentDao
@@ -72,6 +75,7 @@ public class DatabaseCommentService implements EnhancedCommentService {
     public CommentBoundary createComment(String blogId, String password, CommentBoundary commentBoundary) {
 
         userManagementRestService.login(commentBoundary.getUser().getEmail(), password);
+        checkBlogExists(blogId);
 
         commentBoundary.validate();
 
@@ -134,6 +138,11 @@ public class DatabaseCommentService implements EnhancedCommentService {
     @Transactional
     public void deleteAllCommentsOfSpecificBlog(String blogId, String email, String password) {
 
+        BlogPostBoundary blogPostBoundary =  blogManagementRestService.getBlog(blogId).block();
+        if(blogPostBoundary == null){
+            throw new NotFoundException("No blog found with the blogId " + blogId);
+        }
+
         UserBoundary userBoundary = userManagementRestService.login(email, password);
         checkAdminRole(userBoundary.getRoles());
         this.commentDao.deleteAllByBlogId(blogId);
@@ -155,10 +164,18 @@ public class DatabaseCommentService implements EnhancedCommentService {
         this.commentDao.deleteById(commentId);
     }
 
-    private void checkAdminRole(String[] roles){
+    private void checkAdminRole(String[] roles) {
 
         if(!Arrays.stream(roles).anyMatch(Constants.ADMIN :: equals)){
             throw new UnauthorizedException("User does not have the permissions to make this operation.");
+        }
+    }
+
+    private void checkBlogExists(String blogId) {
+
+        BlogPostBoundary blogPostBoundary =  blogManagementRestService.getBlog(blogId).block();
+        if(blogPostBoundary == null){
+            throw new NotFoundException("No blog found with the blogId " + blogId);
         }
     }
 }

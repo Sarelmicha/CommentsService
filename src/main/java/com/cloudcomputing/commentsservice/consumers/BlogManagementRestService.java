@@ -2,17 +2,18 @@ package com.cloudcomputing.commentsservice.consumers;
 
 import com.cloudcomputing.commentsservice.boundaries.BlogPostBoundary;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
 import javax.annotation.PostConstruct;
 
-@Service
+@Component
 public class BlogManagementRestService {
-    private RestTemplate restTemplate;
-    private String url;
+    private WebClient webClient;
     private int port;
     private String host;
-    private String blogRoute;
+    private String route;
 
     @Value("${blogManagementService.port:8081}")
     public void setPort(String port) {
@@ -25,18 +26,19 @@ public class BlogManagementRestService {
         this.host = host;
     }
 
-    @Value("${blogManagementService.blogRoute:blogs}")
-    public void setRoute(String blogRoute) {
-        this.blogRoute = blogRoute;
+    @Value("${blogManagementService.route:blog}")
+    public void setRoute(String route) {
+        this.route = route;
     }
-
     @PostConstruct
     public void init() {
-        this.restTemplate = new RestTemplate();
-        this.url = "http://" + host + ":" + port + "/" + blogRoute;
+        this.webClient = WebClient.create("http://" + host + ":" + port + "/" + route);
     }
 
-    public BlogPostBoundary getBlog(String blogId){
-        return this.restTemplate.getForObject(this.url + "/{blogId}", BlogPostBoundary.class, blogId);
+    public Mono<BlogPostBoundary> getBlog(String blogId){
+        return webClient.get()
+                .uri("/{blogId}", blogId)
+                .retrieve()
+                .bodyToMono(BlogPostBoundary.class).log(" Blog with id " + blogId + " fetched.");
     }
 }
