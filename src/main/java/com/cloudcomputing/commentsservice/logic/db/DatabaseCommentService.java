@@ -2,6 +2,7 @@ package com.cloudcomputing.commentsservice.logic.db;
 
 import com.cloudcomputing.commentsservice.boundaries.CommentBoundary;
 import com.cloudcomputing.commentsservice.boundaries.UserBoundary;
+import com.cloudcomputing.commentsservice.consumers.BlogManagementRestService;
 import com.cloudcomputing.commentsservice.dao.CommentDao;
 import com.cloudcomputing.commentsservice.data.CommentEntity;
 import com.cloudcomputing.commentsservice.exceptions.BadRequestException;
@@ -12,7 +13,7 @@ import com.cloudcomputing.commentsservice.logic.EnhancedCommentService;
 import com.cloudcomputing.commentsservice.logic.utils.CRITERIA_TYPE;
 import com.cloudcomputing.commentsservice.logic.utils.CommentConverter;
 import com.cloudcomputing.commentsservice.logic.utils.COMMENT_TYPE;
-import com.cloudcomputing.commentsservice.producers.UserManagementRestService;
+import com.cloudcomputing.commentsservice.consumers.UserManagementRestService;
 import com.cloudcomputing.commentsservice.utils.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -30,12 +31,15 @@ public class DatabaseCommentService implements EnhancedCommentService {
     private CommentDao commentDao;
     private CommentConverter converter;
     private UserManagementRestService userManagementRestService;
+    private BlogManagementRestService blogManagementRestService;
 
     @Autowired
-    public DatabaseCommentService(CommentDao commentDao ,CommentConverter converter, UserManagementRestService userManagementRestService) {
+    public DatabaseCommentService(CommentDao commentDao ,CommentConverter converter,
+                                  UserManagementRestService userManagementRestService, BlogManagementRestService blogManagementRestService) {
         this.commentDao = commentDao;
         this.converter = converter;
         this.userManagementRestService = userManagementRestService;
+        this.blogManagementRestService = blogManagementRestService;
     }
 
     @Override
@@ -67,9 +71,9 @@ public class DatabaseCommentService implements EnhancedCommentService {
     @Transactional
     public CommentBoundary createComment(String blogId, String password, CommentBoundary commentBoundary) {
 
-        commentBoundary.validate();
-
         userManagementRestService.login(commentBoundary.getUser().getEmail(), password);
+
+        commentBoundary.validate();
 
         if(commentBoundary.getCommentType() == COMMENT_TYPE.REACTION) {
             List<CommentEntity> allUserComments = commentDao.findAllByUser_Email_AndBlogId_AndCommentType(
@@ -92,9 +96,10 @@ public class DatabaseCommentService implements EnhancedCommentService {
     @Transactional
     public void updateComment(Long commentId, String password, CommentBoundary commentBoundary) {
 
+        userManagementRestService.login(commentBoundary.getUser().getEmail(), password);
+
         // Check if User is exists in the User Service and login with his password
         commentBoundary.validate();
-        UserBoundary userBoundary = userManagementRestService.login(commentBoundary.getUser().getEmail(), password);
 
         // Check if the comment is exists in the comments database
         CommentEntity commentEntity = commentDao.findById(commentId);
@@ -128,6 +133,7 @@ public class DatabaseCommentService implements EnhancedCommentService {
     @Override
     @Transactional
     public void deleteAllCommentsOfSpecificBlog(String blogId, String email, String password) {
+
         UserBoundary userBoundary = userManagementRestService.login(email, password);
         checkAdminRole(userBoundary.getRoles());
         this.commentDao.deleteAllByBlogId(blogId);

@@ -32,6 +32,4 @@ public class AdminController  {
             @RequestParam(name = "password") String password) {
         this.enhancedCommentService.deleteAllCommentsOfSpecificBlog(blogId, email, password);
     }
-
-
 }

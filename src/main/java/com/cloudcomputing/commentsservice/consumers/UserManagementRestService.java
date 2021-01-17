@@ -1,7 +1,6 @@
-package com.cloudcomputing.commentsservice.producers;
+package com.cloudcomputing.commentsservice.consumers;
 
 import com.cloudcomputing.commentsservice.boundaries.UserBoundary;
-import com.cloudcomputing.commentsservice.exceptions.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -25,7 +24,6 @@ public class UserManagementRestService {
     @Value("${userManagementService.port:8081}")
     public void setPort(String port) {
         this.port = Integer.parseInt(port);
-
     }
 
     @Value("${userManagementService.host:localhost}")
@@ -73,6 +71,5 @@ public class UserManagementRestService {
                 UserBoundary.class);
 
             return response.getBody();
-
     }
 }
