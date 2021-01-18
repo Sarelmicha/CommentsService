@@ -17,7 +17,7 @@ public class CommentController {
     }
 
     /*--------------------- GET APIS ------------------- */
-    @RequestMapping(path = "comment/{blogid}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(path = "comments/{blogid}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public CommentBoundary[] getAllComments(
             @PathVariable("blogid") String blogId,
             @RequestParam(name = "criteriaType", required = false) String criteriaType,
@@ -29,7 +29,7 @@ public class CommentController {
         return commentService.getAllComments(blogId,criteriaType, criteriaValue, size, page, sortBy, sortOrder).toArray(new CommentBoundary[0]);
     }
 
-    @RequestMapping(path = "comment/{commentid}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(path = "comments/id/{commentid}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public CommentBoundary getComment(
             @PathVariable("commentid") Long commentId) {
         return commentService.getComment(commentId);

@@ -103,6 +103,7 @@ public class DatabaseCommentService implements EnhancedCommentService {
         commentEntity.setBlogId(blogId);
 
         this.commentDao.save(commentEntity);
+
         if (commentBoundary.getCommentType() == COMMENT_TYPE.TEXT && commentBoundary.getTagSupport())
             this.supportManagementRestService.createTicket(commentEntity.getUser().getEmail(), commentEntity.getId());
 

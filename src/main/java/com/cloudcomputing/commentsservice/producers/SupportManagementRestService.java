@@ -2,6 +2,7 @@ package com.cloudcomputing.commentsservice.producers;
 
 import com.cloudcomputing.commentsservice.boundaries.TicketBoundary;
 import com.cloudcomputing.commentsservice.boundaries.UserBoundary;
+import com.cloudcomputing.commentsservice.utils.Constants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,8 @@ public class SupportManagementRestService {
         TicketBoundary ticketBoundary = new TicketBoundary();
         ticketBoundary.setEmail(email);
         ticketBoundary.setName(commentId.toString());
+        ticketBoundary.setExternalId(commentId.toString());
+        ticketBoundary.setExternalServiceType(Constants.BLOG_COMMENTS_SERVICE);
         this.restTemplate.postForObject(this.url, ticketBoundary, TicketBoundary.class);
 
     }

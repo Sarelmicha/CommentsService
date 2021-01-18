@@ -8,6 +8,8 @@ public class TicketBoundary {
     private String name;
     private String email;
     private Boolean isOpen;
+    private String externalServiceType;
+    private String externalId;
     private Date createdTimeStamp;
     private Date closingTimeStamp;
 
@@ -34,6 +36,22 @@ public class TicketBoundary {
 
     public void setOpen(Boolean open) {
         isOpen = open;
+    }
+
+    public String getExternalServiceType() {
+        return externalServiceType;
+    }
+
+    public void setExternalServiceType(String externalServiceType) {
+        this.externalServiceType = externalServiceType;
+    }
+
+    public String getExternalId() {
+        return externalId;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
 
     public String getName() {
