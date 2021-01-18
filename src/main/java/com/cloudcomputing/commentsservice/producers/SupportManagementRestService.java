@@ -46,12 +46,9 @@ public class SupportManagementRestService {
     }
 
     public void createTicket(String email, Long commentId){
-
         TicketBoundary ticketBoundary = new TicketBoundary();
         ticketBoundary.setEmail(email);
         ticketBoundary.setName(commentId.toString());
-        ticketBoundary.setExternalId(commentId.toString());
-        ticketBoundary.setExternalServiceType(Constants.BLOG_COMMENTS_SERVICE);
         this.restTemplate.postForObject(this.url, ticketBoundary, TicketBoundary.class);
 
     }
