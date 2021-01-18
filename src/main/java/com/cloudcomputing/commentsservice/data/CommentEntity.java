@@ -32,6 +32,8 @@ public class CommentEntity {
     @NotEmpty(message="country can not be empty")
     private String country;  // COUNTRY VARCHAR(255)
 
+    private boolean tagSupport;
+
     @Enumerated(EnumType.STRING)
     private COMMENT_TYPE commentType;
 
@@ -43,13 +45,14 @@ public class CommentEntity {
         this.commentContent = new HashMap<>();
     }
 
-    public CommentEntity(Long id, User user, @NotEmpty(message = "blogId can not be empty") String blogId, Date createdTimestamp, Date updatedTimestamp, @NotEmpty(message = "country can not be empty") String country, COMMENT_TYPE commentType, Map<String, Object> commentContent) {
+    public CommentEntity(Long id, User user, @NotEmpty(message = "blogId can not be empty") String blogId, Date createdTimestamp, Date updatedTimestamp, @NotEmpty(message = "country can not be empty") String country,boolean tagSupport, COMMENT_TYPE commentType, Map<String, Object> commentContent) {
         this.id = id;
         this.user = user;
         this.blogId = blogId;
         this.createdTimestamp = createdTimestamp;
         this.updatedTimestamp = updatedTimestamp;
         this.country = country;
+        this.tagSupport = tagSupport;
         this.commentType = commentType;
         this.commentContent = commentContent;
     }
@@ -100,6 +103,14 @@ public class CommentEntity {
 
     public void setCountry(String country) {
         this.country = country;
+    }
+
+    public boolean getTagSupport() {
+        return tagSupport;
+    }
+
+    public void setTagSupport(boolean tagSupport) {
+        this.tagSupport = tagSupport;
     }
 
     public COMMENT_TYPE getCommentType() {

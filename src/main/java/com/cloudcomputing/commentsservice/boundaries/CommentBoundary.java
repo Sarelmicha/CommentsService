@@ -15,6 +15,7 @@ public class CommentBoundary {
     private Date createdTimestamp;
     private Date updatedTimestamp;
     private String country;
+    private boolean tagSupport;
     private COMMENT_TYPE commentType;
     private Map<String, Object> commentContent;
 
@@ -22,13 +23,14 @@ public class CommentBoundary {
 
     }
 
-    public CommentBoundary(Long id, User user, String blogId, Date createdTimestamp, Date updatedTimestamp, String country,COMMENT_TYPE commentType, Map<String, Object> commentContent) {
+    public CommentBoundary(Long id, User user, String blogId, Date createdTimestamp, Date updatedTimestamp, String country,boolean tagSupport,COMMENT_TYPE commentType, Map<String, Object> commentContent) {
         this.id = id;
         this.user = user;
         this.blogId = blogId;
         this.createdTimestamp = createdTimestamp;
         this.updatedTimestamp = updatedTimestamp;
         this.country = country;
+        this.tagSupport = tagSupport;
         this.commentType = commentType;
         this.commentContent = commentContent;
     }
@@ -91,6 +93,14 @@ public class CommentBoundary {
 
     public Map<String, Object> getCommentContent() {
         return commentContent;
+    }
+
+    public boolean getTagSupport() {
+        return tagSupport;
+    }
+
+    public void setTagSupport(boolean tagSupport) {
+        this.tagSupport = tagSupport;
     }
 
     public void setCommentContent(Map<String, Object> commentContent) {

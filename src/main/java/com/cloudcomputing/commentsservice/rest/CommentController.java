@@ -16,7 +16,6 @@ public class CommentController {
         this.commentService = commentService;
     }
 
-
     /*--------------------- GET APIS ------------------- */
     @RequestMapping(path = "comment/{blogid}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public CommentBoundary[] getAllComments(
@@ -28,6 +27,12 @@ public class CommentController {
             @RequestParam(name = "sortBy", required = false, defaultValue = "createdTimestamp") String sortBy,
             @RequestParam(name = "sortOrder", required = false, defaultValue = "DESC") String sortOrder) {
         return commentService.getAllComments(blogId,criteriaType, criteriaValue, size, page, sortBy, sortOrder).toArray(new CommentBoundary[0]);
+    }
+
+    @RequestMapping(path = "comment/{commentid}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public CommentBoundary getComment(
+            @PathVariable("commentid") Long commentId) {
+        return commentService.getComment(commentId);
     }
 
     /*--------------------- POST APIS ------------------- */

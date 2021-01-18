@@ -39,6 +39,7 @@ public class BlogManagementRestService {
     }
 
     public BlogPostBoundary getBlog(String blogId){
+
         return this.restTemplate.getForObject(this.url + "/{blogId}", BlogPostBoundary.class, blogId);
     }
 }
