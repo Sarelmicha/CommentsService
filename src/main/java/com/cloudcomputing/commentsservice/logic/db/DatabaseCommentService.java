@@ -15,6 +15,7 @@ import com.cloudcomputing.commentsservice.logic.utils.CRITERIA_TYPE;
 import com.cloudcomputing.commentsservice.logic.utils.CommentConverter;
 import com.cloudcomputing.commentsservice.logic.utils.COMMENT_TYPE;
 import com.cloudcomputing.commentsservice.consumers.UserManagementRestService;
+import com.cloudcomputing.commentsservice.producers.SupportManagementRestService;
 import com.cloudcomputing.commentsservice.utils.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -33,14 +34,18 @@ public class DatabaseCommentService implements EnhancedCommentService {
     private CommentConverter converter;
     private UserManagementRestService userManagementRestService;
     private BlogManagementRestService blogManagementRestService;
+    private SupportManagementRestService supportManagementRestService;
 
     @Autowired
-    public DatabaseCommentService(CommentDao commentDao ,CommentConverter converter,
-                                  UserManagementRestService userManagementRestService, BlogManagementRestService blogManagementRestService) {
+    public DatabaseCommentService(CommentDao commentDao, CommentConverter converter
+            , UserManagementRestService userManagementRestService
+            , BlogManagementRestService blogManagementRestService
+            , SupportManagementRestService supportManagementRestService) {
         this.commentDao = commentDao;
         this.converter = converter;
         this.userManagementRestService = userManagementRestService;
         this.blogManagementRestService = blogManagementRestService;
+        this.supportManagementRestService = supportManagementRestService;
     }
 
     @Override
@@ -57,17 +62,23 @@ public class DatabaseCommentService implements EnhancedCommentService {
                         .stream().map(this.converter::fromEntity).collect(Collectors.toList());
             } else if (criteriaType.equals(CRITERIA_TYPE.BY_USER.toString())) {
                 return this.commentDao
-                        .findAllByBlogId_AndUser_Email(blogId,criteriaValue,
+                        .findAllByBlogId_AndUser_Email(blogId, criteriaValue,
                                 PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
                         .stream().map(this.converter::fromEntity).collect(Collectors.toList());
             } else if (criteriaType.equals(CRITERIA_TYPE.BY_COUNTRY.toString())) {
                 return this.commentDao.findAllByBlogId_AndCountry(blogId, criteriaValue,
                         PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
-                .stream().map(this.converter::fromEntity).collect(Collectors.toList());
+                        .stream().map(this.converter::fromEntity).collect(Collectors.toList());
             }
         }
-        return this.commentDao.findAllByBlogId(blogId,PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
+        return this.commentDao.findAllByBlogId(blogId, PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
                 .stream().map(this.converter::fromEntity).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CommentBoundary getComment(Long commentId) {
+        return this.converter.fromEntity(this.commentDao.findById(commentId));
     }
 
     @Override
@@ -79,11 +90,11 @@ public class DatabaseCommentService implements EnhancedCommentService {
 
         commentBoundary.validate();
 
-        if(commentBoundary.getCommentType() == COMMENT_TYPE.REACTION) {
+        if (commentBoundary.getCommentType() == COMMENT_TYPE.REACTION) {
             List<CommentEntity> allUserComments = commentDao.findAllByUser_Email_AndBlogId_AndCommentType(
                     commentBoundary.getUser().getEmail(), blogId, commentBoundary.getCommentType());
 
-            if(allUserComments.size() > 0){
+            if (allUserComments.size() > 0) {
                 throw new ConflictException("User already reacted to this blog.");
             }
         }
@@ -92,6 +103,9 @@ public class DatabaseCommentService implements EnhancedCommentService {
         commentEntity.setBlogId(blogId);
 
         this.commentDao.save(commentEntity);
+        if (commentBoundary.getCommentType() == COMMENT_TYPE.TEXT && commentBoundary.getTagSupport())
+            this.supportManagementRestService.createTicket(commentEntity.getUser().getEmail(), commentEntity.getId());
+
         return this.converter.fromEntity(commentEntity);
 
     }
@@ -107,17 +121,19 @@ public class DatabaseCommentService implements EnhancedCommentService {
 
         // Check if the comment is exists in the comments database
         CommentEntity commentEntity = commentDao.findById(commentId);
-        if(commentEntity == null){
+        if (commentEntity == null) {
             throw new NotFoundException("No comment found with id " + commentId);
         }
         // set the updated date to the current date
         CommentEntity updatedComment = this.converter.toEntity(commentBoundary);
-        if(!commentEntity.getUser().getEmail().equalsIgnoreCase(updatedComment.getUser().getEmail())){
+        if (!commentEntity.getUser().getEmail().equalsIgnoreCase(updatedComment.getUser().getEmail())) {
             throw new BadRequestException("The user cannot update comments of other user");
         }
-        if(commentEntity.getCommentType() != updatedComment.getCommentType()){
+        if (commentEntity.getCommentType() != updatedComment.getCommentType()) {
             throw new BadRequestException("Comment cannot be updated with different comment type");
         }
+        if (updatedComment.getCommentType() == COMMENT_TYPE.TEXT && updatedComment.getTagSupport())
+            this.supportManagementRestService.createTicket(commentEntity.getUser().getEmail(), commentEntity.getId());
 
         commentEntity.setUpdatedTimestamp(updatedComment.getCreatedTimestamp());
         commentEntity.setCommentContent(updatedComment.getCommentContent());
@@ -127,8 +143,7 @@ public class DatabaseCommentService implements EnhancedCommentService {
 
     @Override
     @Transactional
-    public void deleteAllComments(String email, String password)
-    {
+    public void deleteAllComments(String email, String password) {
         UserBoundary userBoundary = userManagementRestService.login(email, password);
         checkAdminRole(userBoundary.getRoles());
         this.commentDao.deleteAll();
@@ -150,12 +165,12 @@ public class DatabaseCommentService implements EnhancedCommentService {
     public void deleteComment(String email, String password, Long commentId) {
 
         userManagementRestService.login(email, password);
-        CommentEntity toBeDeleteComment  = this.commentDao.findById(commentId);
+        CommentEntity toBeDeleteComment = this.commentDao.findById(commentId);
 
-        if(toBeDeleteComment == null) {
+        if (toBeDeleteComment == null) {
             throw new NotFoundException("No comment found with id " + commentId);
         }
-        if(!toBeDeleteComment.getUser().getEmail().equalsIgnoreCase(email)){
+        if (!toBeDeleteComment.getUser().getEmail().equalsIgnoreCase(email)) {
             throw new BadRequestException("The user cannot delete comments of other user");
         }
         this.commentDao.deleteById(commentId);
@@ -163,15 +178,15 @@ public class DatabaseCommentService implements EnhancedCommentService {
 
     private void checkAdminRole(String[] roles) {
 
-        if(!Arrays.stream(roles).anyMatch(Constants.ADMIN :: equals)){
+        if (!Arrays.stream(roles).anyMatch(Constants.ADMIN::equals)) {
             throw new UnauthorizedException("User does not have the permissions to make this operation.");
         }
     }
 
     private void checkBlogExists(String blogId) {
 
-        BlogPostBoundary blogPostBoundary =  blogManagementRestService.getBlog(blogId);
-        if(blogPostBoundary == null){
+        BlogPostBoundary blogPostBoundary = blogManagementRestService.getBlog(blogId);
+        if (blogPostBoundary == null) {
             throw new NotFoundException("No blog found with the blogId " + blogId);
         }
     }

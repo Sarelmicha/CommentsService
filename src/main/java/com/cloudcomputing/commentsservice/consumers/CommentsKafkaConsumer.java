@@ -1,4 +1,4 @@
-package com.cloudcomputing.commentsservice.rest;
+package com.cloudcomputing.commentsservice.consumers;
 
 import com.cloudcomputing.commentsservice.boundaries.CommentBoundary;
 import com.cloudcomputing.commentsservice.logic.CommentService;
@@ -20,7 +20,7 @@ public class CommentsKafkaConsumer {
 
     @Bean
     public Consumer<CommentBoundary> receiveAndHandleComment(){
-        return comment-> this.commentService.createComment(comment.getBlogId(),comment.getUser().getEmail(),comment);
+        return comment-> this.commentService.createComment(comment.getBlogId(),comment.getUser().getPassword() ,comment);
     }
 }
 
