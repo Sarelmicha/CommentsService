@@ -1,6 +1,5 @@
 package com.cloudcomputing.commentsservice.logic.db;
 
-import com.cloudcomputing.commentsservice.boundaries.BlogPostBoundary;
 import com.cloudcomputing.commentsservice.boundaries.CommentBoundary;
 import com.cloudcomputing.commentsservice.boundaries.UserBoundary;
 import com.cloudcomputing.commentsservice.consumers.BlogManagementRestService;
@@ -22,10 +21,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
-import javax.xml.stream.events.Comment;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -186,8 +184,8 @@ public class DatabaseCommentService implements EnhancedCommentService {
 
     private void checkBlogExists(String blogId) {
 
-        BlogPostBoundary blogPostBoundary = blogManagementRestService.getBlog(blogId);
-        if (blogPostBoundary == null) {
+        Map<String, Object> blog = blogManagementRestService.getBlog(blogId);
+        if (blog == null) {
             throw new NotFoundException("No blog found with the blogId " + blogId);
         }
     }

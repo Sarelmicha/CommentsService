@@ -7,12 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import javax.annotation.PostConstruct;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 public class SupportManagementRestService {

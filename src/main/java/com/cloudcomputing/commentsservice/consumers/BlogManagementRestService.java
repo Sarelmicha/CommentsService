@@ -1,13 +1,11 @@
 package com.cloudcomputing.commentsservice.consumers;
 
-import com.cloudcomputing.commentsservice.boundaries.BlogPostBoundary;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
+import java.util.Map;
 
 @Component
 public class BlogManagementRestService {
@@ -38,8 +36,7 @@ public class BlogManagementRestService {
         this.url = "http://" + host + ":" + port + "/" + route;
     }
 
-    public BlogPostBoundary getBlog(String blogId){
-
-        return this.restTemplate.getForObject(this.url + "/{blogId}", BlogPostBoundary.class, blogId);
+    public Map<String,Object> getBlog(String blogId){
+        return this.restTemplate.getForObject(this.url + "/{blogId}", Map.class, blogId);
     }
 }

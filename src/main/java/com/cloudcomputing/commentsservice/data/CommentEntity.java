@@ -1,8 +1,6 @@
 package com.cloudcomputing.commentsservice.data;
-import com.cloudcomputing.commentsservice.annotations.NotEmptyFields;
 import com.cloudcomputing.commentsservice.logic.utils.COMMENT_TYPE;
 import com.cloudcomputing.commentsservice.utils.User;
-
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import java.util.Date;

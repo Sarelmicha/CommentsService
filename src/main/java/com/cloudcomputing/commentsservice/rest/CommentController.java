@@ -69,5 +69,4 @@ public class CommentController {
             @PathVariable("commentid") Long commentId) {
         this.commentService.deleteComment(email, password,commentId);
     }
-
 }
