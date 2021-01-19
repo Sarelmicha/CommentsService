@@ -77,7 +77,10 @@ public class DatabaseCommentService implements EnhancedCommentService {
     @Transactional(readOnly = true)
     public CommentBoundary getComment(Long commentId) {
         CommentEntity commentEntity = this.commentDao.findById(commentId);
-        return this.converter.fromEntity(this.commentDao.findById(commentId));
+        if(commentEntity == null){
+            throw new NotFoundException("Comment with id " + commentId + " is not exists.");
+        }
+        return this.converter.fromEntity(commentEntity);
     }
 
     @Override
