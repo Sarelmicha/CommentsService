@@ -110,11 +110,15 @@ public class CommentBoundary {
     public void validate() {
 
         if(this.getCommentType() == null){
-            throw new BadRequestException("comment type cannot be null");
+            throw new BadRequestException("Comment type cannot be null");
         }
 
         if(this.getCommentContent() == null){
-            new BadRequestException("comment content cannot be null");
+            new BadRequestException("Comment content cannot be null");
+        }
+
+        if(this.getCommentType() == COMMENT_TYPE.REACTION && this.getTagSupport()) {
+            throw new BadRequestException("Supports can not be tagged to a reaction comment.");
         }
     }
 }

@@ -2,6 +2,7 @@ package com.cloudcomputing.commentsservice.rest;
 
 import com.cloudcomputing.commentsservice.boundaries.CommentBoundary;
 import com.cloudcomputing.commentsservice.logic.CommentService;
+import com.cloudcomputing.commentsservice.logic.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -10,10 +11,13 @@ import org.springframework.web.bind.annotation.*;
 public class CommentController {
 
     private CommentService commentService;
+    private TicketService ticketService;
 
     @Autowired
-    public CommentController(CommentService commentService) {
+    public CommentController(CommentService commentService, TicketService ticketService) {
+
         this.commentService = commentService;
+        this.ticketService = ticketService;
     }
 
     /*--------------------- GET APIS ------------------- */
@@ -41,7 +45,9 @@ public class CommentController {
             @PathVariable("blogid") String blogId,
             @RequestParam(name = "password") String password,
             @RequestBody CommentBoundary input) {
-        return commentService.createComment(blogId, password, input);
+        CommentBoundary commentBoundary =  commentService.createComment(blogId, password, input);
+        ticketService.createTicket(commentBoundary);
+        return commentBoundary;
     }
 
     /*--------------------- PUT APIS ------------------- */
@@ -50,9 +56,9 @@ public class CommentController {
             @PathVariable("commentid") Long commentId,
             @RequestParam(name = "password") String password,
             @RequestBody CommentBoundary update) {
-        commentService.updateComment(commentId, password, update);
+        CommentBoundary commentBoundary = commentService.updateComment(commentId, password, update);
+        ticketService.createTicket(commentBoundary);
     }
-
 
     /*--------------------- DELETE APIS ------------------- */
     @RequestMapping(path = "/comments/{email}/{commentid}",
