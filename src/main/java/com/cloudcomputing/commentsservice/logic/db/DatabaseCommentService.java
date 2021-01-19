@@ -23,6 +23,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,17 +36,20 @@ public class DatabaseCommentService implements EnhancedCommentService {
     private UserManagementRestService userManagementRestService;
     private BlogManagementRestService blogManagementRestService;
     private SupportManagementRestService supportManagementRestService;
+    private EntityManager entityManager;
 
     @Autowired
     public DatabaseCommentService(CommentDao commentDao, CommentConverter converter
             , UserManagementRestService userManagementRestService
             , BlogManagementRestService blogManagementRestService
-            , SupportManagementRestService supportManagementRestService) {
+            , SupportManagementRestService supportManagementRestService
+            , EntityManager entityManager) {
         this.commentDao = commentDao;
         this.converter = converter;
         this.userManagementRestService = userManagementRestService;
         this.blogManagementRestService = blogManagementRestService;
         this.supportManagementRestService = supportManagementRestService;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -78,6 +82,7 @@ public class DatabaseCommentService implements EnhancedCommentService {
     @Override
     @Transactional(readOnly = true)
     public CommentBoundary getComment(Long commentId) {
+        CommentEntity commentEntity = this.commentDao.findById(commentId);
         return this.converter.fromEntity(this.commentDao.findById(commentId));
     }
 
