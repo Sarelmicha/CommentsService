@@ -76,7 +76,7 @@ public class DatabaseCommentService implements EnhancedCommentService {
     public CommentBoundary getComment(Long commentId) {
         CommentEntity commentEntity = this.commentDao.findById(commentId);
         if(commentEntity == null){
-            throw new NotFoundException("Comment with id " + commentId + " is not exists.");
+            throw new NotFoundException("Comment with id " + commentId + " was not found.");
         }
         return this.converter.fromEntity(commentEntity);
     }
