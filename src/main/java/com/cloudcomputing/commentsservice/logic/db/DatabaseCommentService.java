@@ -15,7 +15,6 @@ import com.cloudcomputing.commentsservice.logic.utils.CRITERIA_TYPE;
 import com.cloudcomputing.commentsservice.logic.utils.CommentConverter;
 import com.cloudcomputing.commentsservice.logic.utils.COMMENT_TYPE;
 import com.cloudcomputing.commentsservice.consumers.UserManagementRestService;
-import com.cloudcomputing.commentsservice.producers.SupportManagementRestService;
 import com.cloudcomputing.commentsservice.utils.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.xml.stream.events.Comment;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,21 +35,15 @@ public class DatabaseCommentService implements EnhancedCommentService {
     private CommentConverter converter;
     private UserManagementRestService userManagementRestService;
     private BlogManagementRestService blogManagementRestService;
-    private SupportManagementRestService supportManagementRestService;
-    private EntityManager entityManager;
 
     @Autowired
     public DatabaseCommentService(CommentDao commentDao, CommentConverter converter
-            , UserManagementRestService userManagementRestService
-            , BlogManagementRestService blogManagementRestService
-            , SupportManagementRestService supportManagementRestService
-            , EntityManager entityManager) {
+            ,UserManagementRestService userManagementRestService
+            ,BlogManagementRestService blogManagementRestService) {
         this.commentDao = commentDao;
         this.converter = converter;
         this.userManagementRestService = userManagementRestService;
         this.blogManagementRestService = blogManagementRestService;
-        this.supportManagementRestService = supportManagementRestService;
-        this.entityManager = entityManager;
     }
 
     @Override
@@ -109,16 +103,13 @@ public class DatabaseCommentService implements EnhancedCommentService {
 
         this.commentDao.save(commentEntity);
 
-        if (commentBoundary.getCommentType() == COMMENT_TYPE.TEXT && commentBoundary.getTagSupport())
-            this.supportManagementRestService.createTicket(commentEntity.getUser().getEmail(), commentEntity.getId());
-
         return this.converter.fromEntity(commentEntity);
 
     }
 
     @Override
     @Transactional
-    public void updateComment(Long commentId, String password, CommentBoundary commentBoundary) {
+    public CommentBoundary updateComment(Long commentId, String password, CommentBoundary commentBoundary) {
 
         userManagementRestService.login(commentBoundary.getUser().getEmail(), password);
 
@@ -138,13 +129,14 @@ public class DatabaseCommentService implements EnhancedCommentService {
         if (commentEntity.getCommentType() != updatedComment.getCommentType()) {
             throw new BadRequestException("Comment cannot be updated with different comment type");
         }
-        if (updatedComment.getCommentType() == COMMENT_TYPE.TEXT && updatedComment.getTagSupport())
-            this.supportManagementRestService.createTicket(commentEntity.getUser().getEmail(), commentEntity.getId());
 
         commentEntity.setUpdatedTimestamp(updatedComment.getCreatedTimestamp());
         commentEntity.setCommentContent(updatedComment.getCommentContent());
+        commentEntity.setTagSupport(updatedComment.getTagSupport());
 
         commentDao.save(commentEntity);
+
+        return this.converter.fromEntity(commentEntity);
     }
 
     @Override
