@@ -4,7 +4,7 @@ public class TicketBoundary {
 
     private String name;
     private String email;
-    private String externalServiceType;
+    private String subjectType;
     private String externalId;
 
     public TicketBoundary() {}
@@ -14,13 +14,12 @@ public class TicketBoundary {
         this.email = email;
     }
 
-
-    public String getExternalServiceType() {
-        return externalServiceType;
+    public String getSubjectType() {
+        return subjectType;
     }
 
-    public void setExternalServiceType(String externalServiceType) {
-        this.externalServiceType = externalServiceType;
+    public void setSubjectType(String subjectType) {
+        this.subjectType = subjectType;
     }
 
     public String getExternalId() {
