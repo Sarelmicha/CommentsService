@@ -1,5 +1,6 @@
 package com.cloudcomputing.commentsservice.consumers;
 
+import com.cloudcomputing.commentsservice.boundaries.BlogPostBoundary;
 import com.cloudcomputing.commentsservice.boundaries.CommentBoundary;
 import com.cloudcomputing.commentsservice.logic.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,7 @@ public class CommentsKafkaConsumer {
 
     @Bean
     public Consumer<CommentBoundary> receiveAndHandleComment(){
-        return comment-> this.commentService.createComment(comment.getBlogId(),comment.getUser().getPassword() ,comment);
+        return comment-> this.commentService.createComment(comment);
     }
 }
 

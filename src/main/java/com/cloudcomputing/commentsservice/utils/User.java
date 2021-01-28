@@ -1,11 +1,14 @@
 package com.cloudcomputing.commentsservice.utils;
 
 import javax.persistence.Embeddable;
+import javax.validation.constraints.NotNull;
 
 @Embeddable
 public class User {
-
+    @NotNull
     private String email;
+
+    @NotNull
     private String password;
 
     public User(){

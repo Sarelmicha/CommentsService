@@ -17,50 +17,49 @@ public class CommentController {
     }
 
     /*--------------------- GET APIS ------------------- */
-    @RequestMapping(path = "comment/{blogid}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(path = "/comments", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public CommentBoundary[] getAllComments(
-            @PathVariable("blogid") String blogId,
+            @RequestParam(name = "blogId", required = false) String blogId,
             @RequestParam(name = "criteriaType", required = false) String criteriaType,
             @RequestParam(name = "criteriaValue", required = false) String criteriaValue,
             @RequestParam(name = "size", required = false, defaultValue = "10") int size,
             @RequestParam(name = "page", required = false, defaultValue = "0") int page,
             @RequestParam(name = "sortBy", required = false, defaultValue = "createdTimestamp") String sortBy,
             @RequestParam(name = "sortOrder", required = false, defaultValue = "DESC") String sortOrder) {
-        return commentService.getAllComments(blogId,criteriaType, criteriaValue, size, page, sortBy, sortOrder).toArray(new CommentBoundary[0]);
+        return commentService.getAllComments(blogId, criteriaType, criteriaValue, size, page, sortBy, sortOrder).toArray(new CommentBoundary[0]);
     }
 
-    @RequestMapping(path = "comment/{commentid}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(path = "/comment/{commentid}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public CommentBoundary getComment(
             @PathVariable("commentid") Long commentId) {
         return commentService.getComment(commentId);
     }
 
     /*--------------------- POST APIS ------------------- */
-    @RequestMapping(path = "/comments/{blogid}", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(path = "/comments",
+            method = RequestMethod.POST,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public CommentBoundary createComment(
-            @PathVariable("blogid") String blogId,
-            @RequestParam(name = "password") String password,
             @RequestBody CommentBoundary input) {
-        return commentService.createComment(blogId, password, input);
+        return commentService.createComment(input);
     }
 
     /*--------------------- PUT APIS ------------------- */
     @RequestMapping(path = "comments/{commentid}", method = RequestMethod.PUT, consumes = MediaType.APPLICATION_JSON_VALUE)
     public void updateComment(
             @PathVariable("commentid") Long commentId,
-            @RequestParam(name = "password") String password,
             @RequestBody CommentBoundary update) {
-        commentService.updateComment(commentId, password, update);
+        commentService.updateComment(commentId, update);
     }
 
-
     /*--------------------- DELETE APIS ------------------- */
-    @RequestMapping(path = "/comments/{email}/{commentid}",
+    @RequestMapping(path = "/comments/{commentid}/{email}",
             method = RequestMethod.DELETE)
-    public void deleteAllCommentsOfSpecificBlog(
+    public void deleteComment(
+            @PathVariable("commentid") Long commentId,
             @PathVariable("email") String email,
-            @RequestParam(name = "password") String password,
-            @PathVariable("commentid") Long commentId) {
+            @RequestParam(name = "password") String password) {
         this.commentService.deleteComment(email, password,commentId);
     }
 

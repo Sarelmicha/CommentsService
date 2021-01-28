@@ -9,8 +9,8 @@ public interface CommentService {
 
     List<CommentBoundary> getAllComments(String blogId, String criteriaType, String criteriaValue, int size, int page, String sortBy, String sortOrder);
     CommentBoundary getComment(Long commentId);
-    CommentBoundary createComment(String blogId, String password, CommentBoundary input);
-    void updateComment(Long commentId, String password, CommentBoundary commentBoundary);
+    CommentBoundary createComment(CommentBoundary commentBoundary);
+    void updateComment(Long commentId, CommentBoundary commentBoundary);
     void deleteComment(String email, String password, Long commentId);
 
 

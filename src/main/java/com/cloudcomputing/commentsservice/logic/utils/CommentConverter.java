@@ -12,7 +12,7 @@ public class CommentConverter {
         CommentBoundary rv = new CommentBoundary();
         rv.setId(entity.getId());
         rv.setUser(entity.getUser());
-        rv.setBlogId(entity.getBlogId());
+        rv.setBlog(entity.getBlog());
         rv.setTagSupport(entity.getTagSupport());
         rv.setCreatedTimestamp(entity.getCreatedTimestamp());
         rv.setUpdatedTimestamp(entity.getCreatedTimestamp());
@@ -25,7 +25,7 @@ public class CommentConverter {
     public CommentEntity toEntity(CommentBoundary boundary) {
         CommentEntity rv = new CommentEntity();
         rv.setUser(boundary.getUser());
-        rv.setBlogId(boundary.getBlogId());
+        rv.setBlog(boundary.getBlog());
         rv.setCreatedTimestamp(new Date());
         rv.setUpdatedTimestamp(new Date());
         rv.setTagSupport(boundary.getTagSupport());

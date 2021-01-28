@@ -15,32 +15,13 @@ import java.util.Map;
 @Service
 public class UserManagementRestService {
     private RestTemplate restTemplate;
+
+    @Value("${userManagementService.baseUrl}")
     private String url;
-    private int port;
-    private String host;
-    private String route;
-
-
-    @Value("${userManagementService.port:8081}")
-    public void setPort(String port) {
-        this.port = Integer.parseInt(port);
-    }
-
-    @Value("${userManagementService.host:localhost}")
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    @Value("${userManagementService.route:users}")
-    public void setRoute(String route) {
-        this.route = route;
-    }
-
 
     @PostConstruct
     public void init() {
         this.restTemplate = new RestTemplate();
-        this.url = "http://" + host + ":" + port + "/" + route;
     }
 
     public UserBoundary login(String email, String password){

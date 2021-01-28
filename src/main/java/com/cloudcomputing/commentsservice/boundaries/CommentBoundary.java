@@ -2,6 +2,7 @@ package com.cloudcomputing.commentsservice.boundaries;
 
 import com.cloudcomputing.commentsservice.exceptions.BadRequestException;
 import com.cloudcomputing.commentsservice.logic.utils.COMMENT_TYPE;
+import com.cloudcomputing.commentsservice.utils.Blog;
 import com.cloudcomputing.commentsservice.utils.User;
 
 import java.util.Date;
@@ -11,7 +12,7 @@ public class CommentBoundary {
 
     private Long id;
     private User user;
-    private String blogId;
+    private Blog blog;
     private Date createdTimestamp;
     private Date updatedTimestamp;
     private String country;
@@ -23,10 +24,10 @@ public class CommentBoundary {
 
     }
 
-    public CommentBoundary(Long id, User user, String blogId, Date createdTimestamp, Date updatedTimestamp, String country,boolean tagSupport,COMMENT_TYPE commentType, Map<String, Object> commentContent) {
+    public CommentBoundary(Long id, User user, Blog blog, Date createdTimestamp, Date updatedTimestamp, String country,boolean tagSupport,COMMENT_TYPE commentType, Map<String, Object> commentContent) {
         this.id = id;
         this.user = user;
-        this.blogId = blogId;
+        this.blog=blog;
         this.createdTimestamp = createdTimestamp;
         this.updatedTimestamp = updatedTimestamp;
         this.country = country;
@@ -51,12 +52,12 @@ public class CommentBoundary {
         this.user = user;
     }
 
-    public String getBlogId() {
-        return blogId;
+    public Blog getBlog() {
+        return blog;
     }
 
-    public void setBlogId(String blogId) {
-        this.blogId = blogId;
+    public void setBlog(Blog blog) {
+        this.blog = blog;
     }
 
     public Date getCreatedTimestamp() {
@@ -105,16 +106,5 @@ public class CommentBoundary {
 
     public void setCommentContent(Map<String, Object> commentContent) {
         this.commentContent = commentContent;
-    }
-
-    public void validate() {
-
-        if(this.getCommentType() == null){
-            throw new BadRequestException("comment type cannot be null");
-        }
-
-        if(this.getCommentContent() == null){
-            new BadRequestException("comment content cannot be null");
-        }
     }
 }

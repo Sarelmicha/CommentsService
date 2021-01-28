@@ -51,143 +51,174 @@ public class DatabaseCommentService implements EnhancedCommentService {
     @Override
     @Transactional(readOnly = true)
     public List<CommentBoundary> getAllComments(String blogId, String criteriaType, String criteriaValue, int size, int page, String sortBy, String sortOrder) {
-
-        checkBlogExists(blogId);
-
-        if (criteriaType != null && criteriaValue != null) {
-            if (criteriaType.equals(CRITERIA_TYPE.BY_TYPE.toString())) {
-                return this.commentDao
-                        .findAllByBlogId_AndCommentType(blogId, COMMENT_TYPE.valueOf(criteriaValue),
-                                PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
-                        .stream().map(this.converter::fromEntity).collect(Collectors.toList());
-            } else if (criteriaType.equals(CRITERIA_TYPE.BY_USER.toString())) {
-                return this.commentDao
-                        .findAllByBlogId_AndUser_Email(blogId, criteriaValue,
-                                PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
-                        .stream().map(this.converter::fromEntity).collect(Collectors.toList());
-            } else if (criteriaType.equals(CRITERIA_TYPE.BY_COUNTRY.toString())) {
-                return this.commentDao.findAllByBlogId_AndCountry(blogId, criteriaValue,
-                        PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
-                        .stream().map(this.converter::fromEntity).collect(Collectors.toList());
-            }
+        if(blogId!=null) {
+            return getForSpecificBlog(blogId, criteriaType, criteriaValue, size, page, sortBy, sortOrder);
         }
-        return this.commentDao.findAllByBlogId(blogId, PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
-                .stream().map(this.converter::fromEntity).collect(Collectors.toList());
+        return getForAllBlogs(criteriaType, criteriaValue, size, page, sortBy, sortOrder);
     }
 
     @Override
     @Transactional(readOnly = true)
     public CommentBoundary getComment(Long commentId) {
-        return this.converter.fromEntity(this.commentDao.findById(commentId));
+        CommentEntity commentEntity = commentDao.findById(commentId);
+        if(commentEntity==null){
+            throw new NotFoundException("No comment found with id:" + commentId);
+        }
+        return this.converter.fromEntity(commentEntity);
     }
 
     @Override
     @Transactional
-    public CommentBoundary createComment(String blogId, String password, CommentBoundary commentBoundary) {
+    public CommentBoundary createComment(CommentBoundary commentBoundary) {
 
-        userManagementRestService.login(commentBoundary.getUser().getEmail(), password);
-        checkBlogExists(blogId);
+        validateBlog(commentBoundary);
 
-        commentBoundary.validate();
+        userManagementRestService.login(commentBoundary.getUser().getEmail(), commentBoundary.getUser().getPassword());
+        BlogPostBoundary blog = blogManagementRestService.getBlogById(commentBoundary.getBlog().getBlogId(), commentBoundary.getBlog().getBloggerEmail(), commentBoundary.getBlog().getProductId());
 
+        // check if comment is reaction that user didn't post a reaction already for this blog
         if (commentBoundary.getCommentType() == COMMENT_TYPE.REACTION) {
-            List<CommentEntity> allUserComments = commentDao.findAllByUser_Email_AndBlogId_AndCommentType(
-                    commentBoundary.getUser().getEmail(), blogId, commentBoundary.getCommentType());
-
-            if (allUserComments.size() > 0) {
+            List<CommentEntity> allUserComments = commentDao.findAllByUser_Email_AndBlog_blogId_AndCommentType(
+                    commentBoundary.getUser().getEmail(), commentBoundary.getBlog().getBlogId(), commentBoundary.getCommentType());
+            if (!allUserComments.isEmpty()) {
                 throw new ConflictException("User already reacted to this blog.");
             }
         }
-
         CommentEntity commentEntity = this.converter.toEntity(commentBoundary);
-        commentEntity.setBlogId(blogId);
 
         this.commentDao.save(commentEntity);
-        if (commentBoundary.getCommentType() == COMMENT_TYPE.TEXT && commentBoundary.getTagSupport())
+        // check if comment is a text and tagged support to send comment for support
+        if (commentBoundary.getCommentType() == COMMENT_TYPE.TEXT && commentBoundary.getTagSupport()) {
             this.supportManagementRestService.createTicket(commentEntity.getUser().getEmail(), commentEntity.getId());
+        }
 
         return this.converter.fromEntity(commentEntity);
-
     }
 
     @Override
     @Transactional
-    public void updateComment(Long commentId, String password, CommentBoundary commentBoundary) {
-
-        userManagementRestService.login(commentBoundary.getUser().getEmail(), password);
-
-        // Check if User is exists in the User Service and login with his password
-        commentBoundary.validate();
-
+    public void updateComment(Long commentId, CommentBoundary commentBoundary) {
+        boolean updated = false;
         // Check if the comment is exists in the comments database
         CommentEntity commentEntity = commentDao.findById(commentId);
         if (commentEntity == null) {
             throw new NotFoundException("No comment found with id " + commentId);
         }
+
+        // Check if User is exists in the User Service and login with his password
+        userManagementRestService.login(commentBoundary.getUser().getEmail(), commentBoundary.getUser().getPassword());
+
         // set the updated date to the current date
         CommentEntity updatedComment = this.converter.toEntity(commentBoundary);
         if (!commentEntity.getUser().getEmail().equalsIgnoreCase(updatedComment.getUser().getEmail())) {
             throw new BadRequestException("The user cannot update comments of other user");
         }
+
         if (commentEntity.getCommentType() != updatedComment.getCommentType()) {
             throw new BadRequestException("Comment cannot be updated with different comment type");
         }
-        if (updatedComment.getCommentType() == COMMENT_TYPE.TEXT && updatedComment.getTagSupport())
+        if (updatedComment.getCommentType() == COMMENT_TYPE.TEXT && updatedComment.getTagSupport()) {
             this.supportManagementRestService.createTicket(commentEntity.getUser().getEmail(), commentEntity.getId());
+        }
+        // Can update only content
+        if (updatedComment.getCommentContent() != null) {
+            commentEntity.setUpdatedTimestamp(updatedComment.getCreatedTimestamp());
+            commentEntity.setCommentContent(updatedComment.getCommentContent());
 
-        commentEntity.setUpdatedTimestamp(updatedComment.getCreatedTimestamp());
-        commentEntity.setCommentContent(updatedComment.getCommentContent());
-
-        commentDao.save(commentEntity);
+            commentDao.save(commentEntity);
+        }
     }
 
     @Override
     @Transactional
     public void deleteAllComments(String email, String password) {
+        // Check user exists and it is an admin
         UserBoundary userBoundary = userManagementRestService.login(email, password);
-        checkAdminRole(userBoundary.getRoles());
+        if (!Arrays.stream(userBoundary.getRoles()).anyMatch(Constants.ADMIN::equals)) {
+            throw new UnauthorizedException("User does not have the permissions to make this operation.");
+        }
         this.commentDao.deleteAll();
     }
 
     @Override
     @Transactional
     public void deleteAllCommentsOfSpecificBlog(String blogId, String email, String password) {
-
-        checkBlogExists(blogId);
-
+        // Check user exists and it is an admin
         UserBoundary userBoundary = userManagementRestService.login(email, password);
-        checkAdminRole(userBoundary.getRoles());
-        this.commentDao.deleteAllByBlogId(blogId);
+        if (!Arrays.stream(userBoundary.getRoles()).anyMatch(Constants.ADMIN::equals)) {
+            throw new UnauthorizedException("User does not have the permissions to make this operation.");
+        }
+        this.commentDao.deleteAllByBlog_blogId(blogId);
     }
 
     @Override
     @Transactional
     public void deleteComment(String email, String password, Long commentId) {
+        // Check if user exist from user service
+        UserBoundary userBoundary = userManagementRestService.login(email, password);
 
-        userManagementRestService.login(email, password);
+        // Get comment to delete
         CommentEntity toBeDeleteComment = this.commentDao.findById(commentId);
 
-        if (toBeDeleteComment == null) {
-            throw new NotFoundException("No comment found with id " + commentId);
-        }
-        if (!toBeDeleteComment.getUser().getEmail().equalsIgnoreCase(email)) {
-            throw new BadRequestException("The user cannot delete comments of other user");
+        // If not admin and not creator
+        if (!Arrays.stream(userBoundary.getRoles()).anyMatch(Constants.ADMIN::equals)) {
+            if (!toBeDeleteComment.getUser().getEmail().equalsIgnoreCase(email)) {
+                throw new UnauthorizedException("The user cannot delete comments of other user");
+            }
         }
         this.commentDao.deleteById(commentId);
     }
 
-    private void checkAdminRole(String[] roles) {
-
-        if (!Arrays.stream(roles).anyMatch(Constants.ADMIN::equals)) {
-            throw new UnauthorizedException("User does not have the permissions to make this operation.");
+    private List<CommentBoundary> getForSpecificBlog(String blogId, String criteriaType, String criteriaValue, int size, int page, String sortBy, String sortOrder) {
+        if (criteriaType != null && criteriaValue != null) {
+            if (criteriaType.equalsIgnoreCase(CRITERIA_TYPE.BY_TYPE.toString())) {
+                return this.commentDao
+                        .findAllByBlog_blogId_AndCommentType(blogId, COMMENT_TYPE.findByString(criteriaValue.toLowerCase()),
+                                PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
+                        .stream().map(this.converter::fromEntity).collect(Collectors.toList());
+            } else if (criteriaType.equalsIgnoreCase(CRITERIA_TYPE.BY_USER.toString())) {
+                return this.commentDao
+                        .findAllByBlog_blogId_AndUser_Email(blogId, criteriaValue,
+                                PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
+                        .stream().map(this.converter::fromEntity).collect(Collectors.toList());
+            } else if (criteriaType.equalsIgnoreCase(CRITERIA_TYPE.BY_COUNTRY.toString())) {
+                return this.commentDao.findAllByBlog_blogId_AndCountry(blogId, criteriaValue,
+                        PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
+                        .stream().map(this.converter::fromEntity).collect(Collectors.toList());
+            }
         }
+        return this.commentDao.findAllByBlog_blogId(blogId, PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
+                .stream().map(this.converter::fromEntity).collect(Collectors.toList());
     }
 
-    private void checkBlogExists(String blogId) {
+    private List<CommentBoundary> getForAllBlogs(String criteriaType, String criteriaValue, int size, int page, String sortBy, String sortOrder) {
+        if (criteriaType != null && criteriaValue != null) {
+            if (criteriaType.equalsIgnoreCase(CRITERIA_TYPE.BY_TYPE.toString())) {
+                return this.commentDao
+                        .findAllByCommentType(COMMENT_TYPE.findByString(criteriaValue.toLowerCase()),
+                                PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
+                        .stream().map(this.converter::fromEntity).collect(Collectors.toList());
+            } else if (criteriaType.equalsIgnoreCase(CRITERIA_TYPE.BY_USER.toString())) {
+                return this.commentDao
+                        .findAllByUser_Email(criteriaValue,
+                                PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
+                        .stream().map(this.converter::fromEntity).collect(Collectors.toList());
+            } else if (criteriaType.equalsIgnoreCase(CRITERIA_TYPE.BY_COUNTRY.toString())) {
+                return this.commentDao.findAllByCountry(criteriaValue,
+                        PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
+                        .stream().map(this.converter::fromEntity).collect(Collectors.toList());
+            }
+        }
+        return this.commentDao.findAll(PageRequest.of(page, size, Sort.Direction.valueOf(sortOrder), sortBy))
+                .stream().map(this.converter::fromEntity).collect(Collectors.toList());
+    }
 
-        BlogPostBoundary blogPostBoundary = blogManagementRestService.getBlog(blogId);
-        if (blogPostBoundary == null) {
-            throw new NotFoundException("No blog found with the blogId " + blogId);
+    public void validateBlog(CommentBoundary commentBoundary) {
+
+        if(commentBoundary.getBlog().getBlogId() == null ||
+                commentBoundary.getBlog().getBloggerEmail() == null ||
+                commentBoundary.getBlog().getProductId() == null){
+            throw new BadRequestException("Missing blog details. Blog details are requested.");
         }
     }
 }

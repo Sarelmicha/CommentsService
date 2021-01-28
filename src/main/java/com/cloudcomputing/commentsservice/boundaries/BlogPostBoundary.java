@@ -76,4 +76,9 @@ public class BlogPostBoundary {
     public void setPostContent(Map<String, Object> postContent) {
         this.postContent = postContent;
     }
+
+    @Override
+    public String toString() {
+        return "blog id: " + this.id + " user: " + this.user.getEmail() + " product id: " + this.product.getId();
+    }
 }

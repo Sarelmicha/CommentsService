@@ -16,32 +16,13 @@ import java.util.Map;
 @Service
 public class SupportManagementRestService {
     private RestTemplate restTemplate;
+
+    @Value("${supportManagementService.baseUrl}")
     private String url;
-    private int port;
-    private String host;
-    private String route;
-
-
-    @Value("${supportManagementService.port:8082}")
-    public void setPort(String port) {
-        this.port = Integer.parseInt(port);
-    }
-
-    @Value("${supportManagementService.host:localhost}")
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    @Value("${supportManagementService.route:ticket}")
-    public void setRoute(String route) {
-        this.route = route;
-    }
-
 
     @PostConstruct
     public void init() {
         this.restTemplate = new RestTemplate();
-        this.url = "http://" + host + ":" + port + "/" + route;
     }
 
     public void createTicket(String email, Long commentId){
