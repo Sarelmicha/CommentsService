@@ -21,7 +21,7 @@ public class AdminController  {
     public void deleteAllComments(
             @PathVariable("email") String email,
             @RequestParam(name = "password") String password,
-            @RequestParam(name = "blogId") String blogId) {
+            @RequestParam(name = "blogId", required = false) String blogId) {
         this.enhancedCommentService.deleteAllComments(email, password, blogId);
     }
 }
