@@ -20,16 +20,8 @@ public class AdminController  {
             method = RequestMethod.DELETE)
     public void deleteAllComments(
             @PathVariable("email") String email,
-            @RequestParam(name = "password") String password) {
-        this.enhancedCommentService.deleteAllComments(email, password);
-    }
-
-    @RequestMapping(path = "/comments/admin/{blogid}/{email}",
-            method = RequestMethod.DELETE)
-    public void deleteAllCommentsOfSpecificBlog(
-            @PathVariable("blogid") String blogId,
-            @PathVariable("email") String email,
-            @RequestParam(name = "password") String password) {
-        this.enhancedCommentService.deleteAllCommentsOfSpecificBlog(blogId, email, password);
+            @RequestParam(name = "password") String password,
+            @RequestParam(name = "blogId") String blogId) {
+        this.enhancedCommentService.deleteAllComments(email, password, blogId);
     }
 }

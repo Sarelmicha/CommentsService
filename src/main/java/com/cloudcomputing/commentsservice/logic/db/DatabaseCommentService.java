@@ -131,24 +131,17 @@ public class DatabaseCommentService implements EnhancedCommentService {
 
     @Override
     @Transactional
-    public void deleteAllComments(String email, String password) {
+    public void deleteAllComments(String email, String password, String blogId) {
         // Check user exists and it is an admin
         UserBoundary userBoundary = userManagementRestService.login(email, password);
         if (!Arrays.stream(userBoundary.getRoles()).anyMatch(Constants.ADMIN::equals)) {
             throw new UnauthorizedException("User does not have the permissions to make this operation.");
         }
-        this.commentDao.deleteAll();
-    }
-
-    @Override
-    @Transactional
-    public void deleteAllCommentsOfSpecificBlog(String blogId, String email, String password) {
-        // Check user exists and it is an admin
-        UserBoundary userBoundary = userManagementRestService.login(email, password);
-        if (!Arrays.stream(userBoundary.getRoles()).anyMatch(Constants.ADMIN::equals)) {
-            throw new UnauthorizedException("User does not have the permissions to make this operation.");
+        if (blogId != null) {
+            this.commentDao.deleteAllByBlog_blogId(blogId);
+        } else {
+            this.commentDao.deleteAll();
         }
-        this.commentDao.deleteAllByBlog_blogId(blogId);
     }
 
     @Override
